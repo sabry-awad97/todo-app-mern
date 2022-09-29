@@ -1,18 +1,37 @@
+import cors from 'cors';
+import dotenv from 'dotenv';
 import express, { ErrorRequestHandler } from 'express';
 import http from 'http';
 import createError from 'http-errors';
 import logger from 'morgan';
 import { join } from 'path';
 
+import { createStream } from 'rotating-file-stream';
+
 import indexRouter from './routes';
 
-import cors from 'cors';
+dotenv.config();
 
 const app = express();
 
 const PORT = process.env.PORT || '3000';
 
-app.use(logger('dev'));
+app.use(
+  logger(process.env.REQUEST_LOG_FORMAT || 'dev', {
+    stream: process.env.REQUEST_LOG_FILE
+      ? createStream(process.env.REQUEST_LOG_FILE, {
+          size: '10M', // rotate every 10 MegaBytes written
+          interval: '1d', // rotate daily
+          compress: 'gzip',
+        })
+      : process.stdout,
+  })
+);
+
+if (process.env.REQUEST_LOG_FILE) {
+  app.use(logger(process.env.REQUEST_LOG_FORMAT || 'dev'));
+}
+
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
