@@ -11,12 +11,10 @@ router
     const items = await todos.readAll();
     return res.json(items);
   })
-  .post(
-    async (req: Request<{}, {}, { title: string }>, res: Response<Todo>) => {
-      const { title } = req.body;
-      const todo = await todos.create(title);
-      res.json(todo);
-    }
-  );
+  .post(async (req: Request<{}, {}, Todo>, res: Response<Todo>) => {
+    const { title } = req.body;
+    const todo = await todos.create(title);
+    return res.json(todo);
+  });
 
 export default router;
