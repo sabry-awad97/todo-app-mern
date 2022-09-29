@@ -1,16 +1,30 @@
+import capcon from 'capture-console';
 import cors from 'cors';
+import DBG from 'debug';
 import dotenv from 'dotenv';
 import express, { ErrorRequestHandler } from 'express';
+import fs from 'fs/promises';
 import http from 'http';
 import createError from 'http-errors';
 import logger from 'morgan';
 import { join } from 'path';
-
 import { createStream } from 'rotating-file-stream';
+import util from 'util';
 
 import indexRouter from './routes';
 
+const debug = DBG('todos:debug');
+const dbgError = DBG('todos:error');
+
 dotenv.config();
+
+capcon.startCapture(process.stdout, async stdout => {
+  await fs.appendFile('stdout.txt', stdout, 'utf8');
+});
+
+capcon.startCapture(process.stderr, async stderr => {
+  await fs.appendFile('stderr.txt', stderr, 'utf8');
+});
 
 const app = express();
 
@@ -59,6 +73,7 @@ server.listen(PORT, () => {
 });
 
 server.on('error', (error: NodeJS.ErrnoException) => {
+  dbgError(error);
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -73,4 +88,13 @@ server.on('error', (error: NodeJS.ErrnoException) => {
     default:
       throw error;
   }
+});
+
+process.on('uncaughtException', function (err) {
+  console.error(`Crashed!!! - ${err.stack || err}`);
+});
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error(`Unhandled Rejection at: ${util.inspect(p)} reason:
+  ${reason}`);
 });
