@@ -6,15 +6,14 @@ const axiosClient = axios.create({
   baseURL: BASE_URL,
 });
 
-interface Data {
+export interface Todo {
   title: string;
-  items: string[];
 }
 
-export const getAll = async (url: string) => {
-  const reponse = await axiosClient.get<Data>(url);
+export const getAll = async () => {
+  const reponse = await axiosClient.get<Todo[]>('/');
   return reponse.data;
 };
 
-export const createTodo = (url: string, todo: string) =>
-  axiosClient.post<Data>(url, { newItem: todo });
+export const createTodo = (title: string) =>
+  axiosClient.post<Todo[]>('/', { title });

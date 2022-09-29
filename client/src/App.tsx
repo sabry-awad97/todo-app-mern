@@ -1,38 +1,33 @@
 import { useEffect, useState } from 'react';
-import { createTodo, getAll } from './api/api';
+import { createTodo, getAll, Todo } from './api/api';
+import { getCurrentDay } from './helpers';
 
 const App = () => {
-  const [title, setTitle] = useState('');
-  const [todo, setTodo] = useState('');
-  const [data, setData] = useState<string[]>([]);
-
-  const { pathname } = location;
+  const [day, setDay] = useState('');
+  const [todoTitle, setTodoTitle] = useState('');
+  const [data, setData] = useState<Todo[]>([]);
 
   useEffect(() => {
-    getAll(pathname === '/work' ? pathname : '/').then(({ title, items }) => {
-      setTitle(title);
-      setData(items);
-    });
+    setDay(getCurrentDay());
+    getAll().then(setData);
   }, []);
 
   return (
     <>
       <div className="box" id="heading">
-        <h1>{title}</h1>
+        <h1>{day}</h1>
       </div>
       <div className="box">
-        {data.map((item, idx) => (
+        {data.map(({ title }, idx) => (
           <div key={idx} className="item">
             <input type="checkbox" />
-            <p>{item}</p>
+            <p>{title}</p>
           </div>
         ))}
 
         <form
           onSubmit={() => {
-            pathname === '/work'
-              ? createTodo(pathname, todo)
-              : createTodo('/', todo);
+            createTodo(todoTitle);
           }}
         >
           <input
@@ -40,10 +35,10 @@ const App = () => {
             name="newItem"
             placeholder="New Item"
             autoComplete="off"
-            value={todo}
-            onChange={e => setTodo(e.target.value)}
+            value={todoTitle}
+            onChange={e => setTodoTitle(e.target.value)}
           />
-          <button type="submit" name="list" value={title}>
+          <button type="submit" name="list" value={todoTitle}>
             +
           </button>
         </form>

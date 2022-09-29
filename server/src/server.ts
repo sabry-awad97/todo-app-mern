@@ -11,6 +11,7 @@ import { join } from 'path';
 import { createStream } from 'rotating-file-stream';
 import util from 'util';
 
+import { useModel } from './models/store';
 import indexRouter from './routes';
 
 const debug = DBG('todos:debug');
@@ -25,6 +26,10 @@ capcon.startCapture(process.stdout, async stdout => {
 capcon.startCapture(process.stderr, async stderr => {
   await fs.appendFile('stderr.txt', stderr, 'utf8');
 });
+
+useModel(process.env.MODEL ? process.env.MODEL : 'memory')
+  .then(() => debug('Model loaded successfully'))
+  .catch(error => onError({ ...error, code: 'ESTORE' }));
 
 const app = express();
 
@@ -72,7 +77,16 @@ server.listen(PORT, () => {
   );
 });
 
-server.on('error', (error: NodeJS.ErrnoException) => {
+process.on('uncaughtException', function (err) {
+  console.error(`Crashed!!! - ${err.stack || err}`);
+});
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error(`Unhandled Rejection at: ${util.inspect(p)} reason:
+  ${reason}`);
+});
+
+const onError = (error: NodeJS.ErrnoException) => {
   dbgError(error);
   if (error.syscall !== 'listen') {
     throw error;
@@ -85,16 +99,12 @@ server.on('error', (error: NodeJS.ErrnoException) => {
     case 'EADDRINUSE':
       console.error(PORT + ' is already in use');
       process.exit(1);
+    case 'ESTORE':
+      console.error(`Data store initialization failure because `, error);
+      process.exit(1);
     default:
       throw error;
   }
-});
+};
 
-process.on('uncaughtException', function (err) {
-  console.error(`Crashed!!! - ${err.stack || err}`);
-});
-
-process.on('unhandledRejection', (reason, p) => {
-  console.error(`Unhandled Rejection at: ${util.inspect(p)} reason:
-  ${reason}`);
-});
+server.on('error', onError);
