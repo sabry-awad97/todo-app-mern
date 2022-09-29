@@ -1,79 +1,41 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 
-import db from '../models/items';
+import items from '../models/items';
+import workItems from '../models/workItems';
 
-export const router = express.Router();
+const router = express.Router();
 
-/**
- * Function takes in a Date object and returns the day of the week in a text format.
- */
-// const getWeekDay = function (date: Date) {
-//   const weekdays = [
-//     'Sunday',
-//     'Monday',
-//     'Tuesday',
-//     'Wednesday',
-//     'Thursday',
-//     'Friday',
-//     'Saturday',
-//   ];
-//   const day = date.getDay();
-//   return weekdays[day];
-// };
+router
+  .route(/^\/(work)?$/)
+  .get((req: Request, res: Response<{ title: string; items: string[] }>) => {
+    const url = req.url;
 
-/*
- * Options key examples:
- *    day:
- *        The representation of the day.
- *        Possible values are "numeric", "2-digit".
- *    weekday:
- *        The representation of the weekday.
- *        Possible values are "narrow", "short", "long".
- *    year:
- *        The representation of the year.
- *        Possible values are "numeric", "2-digit".
- *    month:
- *        The representation of the month.
- *        Possible values are "numeric", "2-digit", "narrow", "short", "long".
- *    hour:
- *        The representation of the hour.
- *        Possible values are "numeric", "2-digit".
- *    minute:
- *        The representation of the minute.
- *        Possible values are "numeric", "2-digit".
- *    second:
- *        The representation of the second.
- *        Possible values are "numeric", 2-digit".
- */
-// const formatDate = (date: Date, separator: string) => {
-//   const options = [
-//     { day: 'numeric' },
-//     { month: 'short' },
-//     { year: 'numeric' },
-//   ] as const;
+    if (url === '/work') {
+      return res.json({ title: 'Work List', items: workItems });
+    }
 
-//   return options
-//     .map(option => new Intl.DateTimeFormat('en', option).format(date))
-//     .join(separator);
-// };
+    const today = new Date();
+    const day = today.toLocaleDateString('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
 
-/* GET home page. */
-router.get('/', (req, res, next) => {
-  const today = new Date();
-  // const weekDay = getWeekDay(today);
-  const day = today.toLocaleDateString('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-  res.render('list', { listTitle: day, items: db });
-});
+    return res.json({ title: day, items: items });
+  })
+  .post(
+    (req: Request<{}, {}, { newItem: string }>, res: Response<string[]>) => {
+      const url = req.url;
+      const { newItem } = req.body;
 
-router.post('/', (req, res) => {
-  const item = req.body.newItem;
-
-  db.push(item);
-  res.redirect('/');
-});
+      if (url === '/work') {
+        workItems.push(newItem);
+        res.json(workItems);
+      } else {
+        items.push(newItem);
+        res.json(items);
+      }
+    }
+  );
 
 export default router;
