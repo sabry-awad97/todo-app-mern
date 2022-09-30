@@ -6,7 +6,7 @@ import { Todo } from '../models/Todo';
 const router = express.Router();
 
 router
-  .route('/')
+  .route('')
   .get(async (req: Request, res: Response<Todo[]>) => {
     const items = await todos.readAll();
     return res.json(items);
@@ -16,5 +16,11 @@ router
     const todo = await todos.create(title);
     return res.json(todo);
   });
+
+router.route('/:id').delete(async (req: Request<{ id: string }>, res) => {
+  const { id } = req.params;
+  const todo = await todos.destroy(id);
+  return res.json(todo);
+});
 
 export default router;

@@ -8,6 +8,7 @@ const axiosClient = axios.create({
 
 export interface Todo {
   title: string;
+  id: string;
 }
 
 export const getAll = async () => {
@@ -17,3 +18,7 @@ export const getAll = async () => {
 
 export const createTodo = (title: string) =>
   axiosClient.post<Todo[]>('/', { title });
+
+export const deleteTodo = async (id: string) => {
+  await axiosClient.delete(`/${id}`);
+};

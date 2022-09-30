@@ -10,3 +10,8 @@ Content-Type: application/json
 {
   "title": "Learn React"
 }
+
+###
+
+# Delete a Todo from the list of available resources
+DELETE http://localhost:3000/633633cd44667109f767df27 HTTP/1.1

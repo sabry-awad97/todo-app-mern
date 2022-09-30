@@ -69,17 +69,27 @@ const TodoSchema = new Schema<TodoClass, ITodoModel>({
 const Todo = model<ITodoDoc, ITodoModel>('Todo', TodoSchema);
 
 export default class MongooseStore extends AbstractStore {
+  async destroy(id: string): Promise<TodoClass | null> {
+    const todo = await Todo.findByIdAndDelete(id);
+
+    if (todo) {
+      return new TodoClass(todo.title, todo.id);
+    }
+
+    return null;
+  }
+
   async create(title: string): Promise<TodoClass> {
     await connectDB();
     const todo = new Todo({ title });
     const savedTodo = await todo.save();
-    return savedTodo;
+    return new TodoClass(title, String(savedTodo.id));
   }
 
   async readAll(): Promise<TodoClass[]> {
     await connectDB();
     const todos = await Todo.find({});
-    return todos;
+    return todos.map(todo => new TodoClass(todo.title, String(todo.id)));
   }
 
   async close(): Promise<void> {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createTodo, getAll, Todo } from './api/api';
+import { createTodo, deleteTodo, getAll, Todo } from './api/api';
 import { getCurrentDay } from './helpers';
 
 const App = () => {
@@ -18,9 +18,9 @@ const App = () => {
         <h1>{day}</h1>
       </div>
       <div className="box">
-        {data.map(({ title }, idx) => (
-          <div key={idx} className="item">
-            <input type="checkbox" />
+        {data.map(({ title, id }) => (
+          <div key={id} className="item">
+            <input type="checkbox" onChange={() => deleteTodo(id)} />
             <p>{title}</p>
           </div>
         ))}
