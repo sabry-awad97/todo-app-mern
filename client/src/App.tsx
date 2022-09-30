@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createTodo, deleteTodo, getAll, Todo } from './api/api';
 import { getCurrentDay } from './helpers';
 
@@ -6,6 +6,8 @@ const App = () => {
   const [day, setDay] = useState('');
   const [todoTitle, setTodoTitle] = useState('');
   const [data, setData] = useState<Todo[]>([]);
+
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     setDay(getCurrentDay());
@@ -19,10 +21,18 @@ const App = () => {
       </div>
       <div className="box">
         {data.map(({ title, id }) => (
-          <div key={id} className="item">
-            <input type="checkbox" onChange={() => deleteTodo(id)} />
-            <p>{title}</p>
-          </div>
+          <form ref={formRef} key={id}>
+            <div className="item">
+              <input
+                type="checkbox"
+                onChange={() => {
+                  deleteTodo(id);
+                  formRef.current?.submit();
+                }}
+              />
+              <p>{title}</p>
+            </div>
+          </form>
         ))}
 
         <form
