@@ -1,8 +1,7 @@
 import DBG from 'debug';
-import mongoose, { model, Model, Schema } from 'mongoose';
+import mongoose, { Model, model, Schema, Types } from 'mongoose';
 
-import { AbstractStore } from './Todo';
-import { Todo as TodoClass } from './Todo';
+import { AbstractStore, Todo, TodoList } from './Todo';
 
 const debug = DBG('todos:todos-mongooose');
 const dbgError = DBG('todos:error-mongooose');
@@ -58,38 +57,72 @@ const connectDB = async () => {
   }
 };
 
-interface ITodoDoc extends TodoClass, Document {}
+interface IList {
+  name: string;
+  todos: Types.DocumentArray<Todo>;
+}
 
-interface ITodoModel extends Model<TodoClass> {}
+interface IListDoc extends IList, Document {}
 
-const TodoSchema = new Schema<TodoClass, ITodoModel>({
-  title: String,
+interface IListModel extends Model<IList> {}
+
+const ListSchema = new Schema<IList, IListModel>({
+  name: String,
+  todos: [new Schema<Todo, Model<Todo>>({ title: String })],
 });
 
-const Todo = model<ITodoDoc, ITodoModel>('Todo', TodoSchema);
+const List = model<IListDoc, IListModel>('List', ListSchema);
 
 export default class MongooseStore extends AbstractStore {
-  async destroy(id: string): Promise<TodoClass | null> {
-    const todo = await Todo.findByIdAndDelete(id);
+  async createOneTodo(listName: string, todoTitle: string): Promise<TodoList> {
+    await connectDB();
+    const list = await List.findOne({ name: listName });
+    list?.todos.push({ title: todoTitle });
+    const saved = await list!.save();
+    return new TodoList(saved.id, saved.name, saved.todos);
+  }
 
-    if (todo) {
-      return new TodoClass(todo.title, todo.id);
+  async destroyOneTodo(listName: string, id: string): Promise<TodoList | null> {
+    await connectDB();
+
+    const list = await List.findOne({ name: listName });
+
+    if (list) {
+      const todos = list.todos.pull({ id: id });
+      const saved = await list.save();
+      return new TodoList(saved.id, saved.name, todos);
     }
 
     return null;
   }
 
-  async create(title: string): Promise<TodoClass> {
+  async createList(title: string, todos: Todo[]): Promise<TodoList> {
     await connectDB();
-    const todo = new Todo({ title });
-    const savedTodo = await todo.save();
-    return new TodoClass(title, String(savedTodo.id));
+
+    const todoList = new List({ title, todos });
+    const savedList = await todoList.save();
+    return new TodoList(String(savedList.id), savedList.name, savedList.todos);
   }
 
-  async readAll(): Promise<TodoClass[]> {
+  async readOneList(listName: string): Promise<TodoList> {
     await connectDB();
-    const todos = await Todo.find({});
-    return todos.map(todo => new TodoClass(todo.title, String(todo.id)));
+    let list = await List.findOne({ name: listName });
+    if (!list) {
+      list = await List.create({ name: listName, todos: [] });
+    }
+    return new TodoList(String(list.id), list.name, list.todos);
+  }
+
+  async readOneTodo(listName: string, id: string): Promise<Todo | null> {
+    await connectDB();
+
+    const list = await List.findOne({ name: listName });
+    if (!list) return null;
+
+    const todo = list.todos.find(todo => todo.id === id);
+    if (!todo) return null;
+
+    return new Todo(todo.id, todo.title);
   }
 
   async close(): Promise<void> {

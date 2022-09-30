@@ -6,19 +6,24 @@ const axiosClient = axios.create({
   baseURL: BASE_URL,
 });
 
-export interface Todo {
+interface Todo {
   title: string;
   id: string;
 }
 
-export const getAll = async () => {
-  const reponse = await axiosClient.get<Todo[]>('/');
+export interface TodoList {
+  name: string;
+  todos: Todo[];
+}
+
+export const getTodoList = async (listName: string) => {
+  const reponse = await axiosClient.get<TodoList>(`${listName}`);
   return reponse.data;
 };
 
-export const createTodo = (title: string) =>
-  axiosClient.post<Todo[]>('/', { title });
+export const createTodo = (listName: string, todoTitle: string) =>
+  axiosClient.post<Todo[]>(`/${listName}`, { title: todoTitle });
 
-export const deleteTodo = async (id: string) => {
-  await axiosClient.delete(`/${id}`);
+export const deleteTodo = async (listName: string, id: string) => {
+  await axiosClient.delete(`/${listName}/${id}`);
 };

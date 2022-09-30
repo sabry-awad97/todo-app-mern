@@ -1,26 +1,49 @@
 import express, { Request, Response } from 'express';
-import { Store as todos } from '../models/store';
-
-import { Todo } from '../models/Todo';
+import { Store as lists } from '../models/store';
+import { Todo, TodoList } from '../models/Todo';
 
 const router = express.Router();
 
 router
-  .route('')
-  .get(async (req: Request, res: Response<Todo[]>) => {
-    const items = await todos.readAll();
-    return res.json(items);
+  .route('/:listName')
+  .get(async (req: Request<{ listName: string }>, res) => {
+    const customListName = req.params.listName.toLowerCase();
+    const found = await lists.readOneList(customListName);
+    return res.json(found);
   })
-  .post(async (req: Request<{}, {}, Todo>, res: Response<Todo>) => {
-    const { title } = req.body;
-    const todo = await todos.create(title);
-    return res.json(todo);
-  });
+  .post(
+    async (
+      req: Request<{ listName: string }, {}, { title: string }>,
+      res: Response<TodoList>
+    ) => {
+      const listName = req.params.listName.toLowerCase();
+      const { title } = req.body;
+      const todoList = await lists.createOneTodo(listName, title);
+      return res.json(todoList);
+    }
+  );
 
-router.route('/:id').delete(async (req: Request<{ id: string }>, res) => {
-  const { id } = req.params;
-  const todo = await todos.destroy(id);
-  return res.json(todo);
-});
+router
+  .route('/:listName/:id')
+  .get(
+    async (
+      req: Request<{ listName: string; id: string }>,
+      res: Response<Todo | null>
+    ) => {
+      const { listName, id } = req.params;
+      const todo = await lists.readOneTodo(listName.toLowerCase(), id);
+      return res.json(todo);
+    }
+  )
+  .delete(
+    async (
+      req: Request<{ listName: string; id: string }>,
+      res: Response<TodoList | null>
+    ) => {
+      const { listName, id } = req.params;
+      const list = await lists.destroyOneTodo(listName.toLowerCase(), id);
+      return res.json(list);
+    }
+  );
 
 export default router;

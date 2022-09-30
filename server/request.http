@@ -1,10 +1,14 @@
-# Get a list of all the available resources
-GET http://localhost:3000 HTTP/1.1
+# Get a default list
+GET http://localhost:3000/todo HTTP/1.1
+
+###
+# Create a CustomTodoList Dynamically
+GET http://localhost:3000/Home HTTP/1.1
 
 ###
 
-# Create a new Todo
-POST http://localhost:3000 HTTP/1.1
+# Create a todo to a list dynamically
+POST http://localhost:3000/Home HTTP/1.1
 Content-Type: application/json
 
 {
@@ -13,5 +17,10 @@ Content-Type: application/json
 
 ###
 
-# Delete a Todo from the list of available resources
-DELETE http://localhost:3000/633633cd44667109f767df27 HTTP/1.1
+# Get a Todo from the a dynamic list
+GET http://localhost:3000/Home/6336c8feb23a30b28afa549b HTTP/1.1
+
+###
+
+# Delete a Todo from dynamic list
+DELETE http://localhost:3000/Home/6336c893e114e02dca5dde7b HTTP/1.1
